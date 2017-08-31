@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Game0: Hammer - Design</title>
+    </head>
+    <body>
+        <h1>Game0: Hammer - Design</h1>
+        <p>"Hammer" is about smashing squares with a rectangle. </p>
+        <p>The player controls the horizontal position of the hammer using the mouse and uses it to smash targets.</p>
+        <h2>Gameplay</h2>
+        <div style="text-align:center">
+            <img src="hammer.png" width="320" height="240" />
+        </div>
+        <p>The hammer starts in the middle of the screen and can only be moved left and right.</p>
+        <div style="text-align:center">
+            <img src="targets.png" width="320" height="240" />
+        </div>
+        <p>
+            Targets (squares) appear from the bottom and top of the screen. Their velocities are random, and they can bounce off walls.
+            (Their direction of movement should not be so horizontal, however, that they move incredibly slowly vertically) Targets cannot
+            collide with each other. Targets will appear at an increasing rate and velocity as the game goes on (probably to some max). 
+        </p>
+        <div style="text-align:center">
+            <img src="smash1.png" width="320" height="240" />
+            <img src="smash2.png" width="320" height="240" />
+        </div>
+        <p>
+            Targets can be smashed with the sides of the hammer but not with its top or bottom. The player gets a point for each target smashed, and the hammer's length grows
+            slightly (probably to some max).  
+            (Options: 1. The hammer may need to be moving at a high enough velocity to smash the target; otherwise, it just pushes it. 2. 
+            Targets can also have health and award different amounts of points)
+            If the top or bottom of the hammer gets hit by a target, the hammer is damaged and the length of the hammer shortens. (Options: 1. 
+            Targets that touch the hammer blow up (no points). 2. Targets that touch the hammer bounce off of it. 3. Hammer gets stunned in place for a short while
+            4. Hammer doesn't get damaged from being hit by a target)
+        </p>
+        <div style="text-align:center">
+            <img src="drain.png" width="320" height="240" />
+        </div>
+        <p>
+            The length of the hammer will drain over time and blow up when it becomes a square, thus ending the game. (Option: After the hammer
+            becomes a square, the hammer will turn red gradually until it blows up. The hammer can still be saved by smashing targets but will break if hit by a target
+            on the top or bottom)
+        </p>
+        <h2>Note: Target/Hammer Shattering</h2>
+        <p>There needs to be some sort of pause + shattering effect before the targets or hammer breaks -- it would look silly if the targets simply disappear. </p>
+    </body>
+</html>
