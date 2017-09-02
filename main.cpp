@@ -175,15 +175,20 @@ int main(int argc, char **argv) {
 			if (!died && tower.size() != max_level)
 			{
 				level.x += elapsed * level_speed;
-				if (level.x > 1.0f - 0.5f * level_width)
+				while (true)
 				{
-					level.x = 2.0f * (1.0f - 0.5f * level_width) - level.x;
-					level_speed = -level_speed;
-				}
-				else if (level.x < -1.0f + 0.5f * level_width)
-				{
-					level.x = 2.0f * (-1.0f + 0.5f * level_width) - level.x;
-					level_speed = -level_speed;
+					if (level.x > 1.0f - 0.5f * level_width)
+					{
+						level.x = 2.0f * (1.0f - 0.5f * level_width) - level.x;
+						level_speed = -level_speed;
+					}
+					else if (level.x < -1.0f + 0.5f * level_width)
+					{
+						level.x = 2.0f * (-1.0f + 0.5f * level_width) - level.x;
+						level_speed = -level_speed;
+					}
+					else
+						break;
 				}
 			}
 		}
