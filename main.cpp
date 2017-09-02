@@ -77,6 +77,7 @@ int main(int argc, char **argv) {
 
 	//------------  game state ------------
 	const float length = 40.0f;
+	const float min_width = 1.0f / config.size.x * 2.0f;
 	const float width = 4.0f * length / config.size.x * 2.0f;
 	const float height = length / config.size.y * 2.0f;
 	const float level_speed_inc = 0.1f;
@@ -136,11 +137,21 @@ int main(int argc, char **argv) {
 						if (left < prev.x && prev.x < right)
 						{
 							level_width = right - prev.x;
+							if (level_width < min_width)
+							{
+								level_width = min_width;
+								right = prev.x + min_width;
+							}
 							left = prev.x;
 						}
 						else if (left < prev.z && prev.z < right)
 						{
 							level_width = prev.z - left;
+							if (level_width < min_width)
+							{
+								level_width = min_width;
+								left = prev.z - min_width;
+							}
 							right = prev.z;
 						}
 						else
