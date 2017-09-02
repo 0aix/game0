@@ -11,7 +11,9 @@ When you win, the game can be started over, but the base speed of the blocks wil
 
 ## Base0
 
-Base0 is the starter code for the game0 in the 15-466-f17 course. It was developed by Jim McCann.
+Base0 is the starter code for the game0 in the 15-466-f17 course. It was developed by Jim McCann. 
+
+The rest of the README comes from the original Base0 README.
 
 ## Requirements
 
