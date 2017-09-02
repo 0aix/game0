@@ -12,7 +12,7 @@ kit-libs-win
 *.filters
 *.user
 *.userosscache
-*.sln.docstates
+*.sln
 Debug/
 Release/
 .vs/
