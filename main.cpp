@@ -6,13 +6,12 @@
 
 #include <chrono>
 #include <iostream>
-#include <random>
 #include <vector>
 
 int main(int argc, char **argv) {
 	//Configuration:
 	struct {
-		std::string title = "Game0: Hammer";
+		std::string title = "Game0: Stacking - Level 1";
 		glm::uvec2 size = glm::uvec2(640, 480);
 	} config;
 
@@ -74,39 +73,23 @@ int main(int argc, char **argv) {
 	}
 
 	//Hide mouse cursor (note: showing can be useful for debugging):
-	//SDL_ShowCursor(SDL_DISABLE);
-	//SDL_SetRelativeMouseMode(SDL_TRUE);
+	SDL_ShowCursor(SDL_DISABLE);
 
 	//------------  game state ------------
-	const float length = 25.0f;
-	const float width = length / config.size.x * 2.0f;
+	const float length = 40.0f;
+	const float width = 4.0f * length / config.size.x * 2.0f;
 	const float height = length / config.size.y * 2.0f;
-	const float spawn_delay_decrease = 0.01f;
-	const float drain_increase = 0.001f;
-	const float target_speed_increase = 0.01f;
-	const float min_spawn_delay = 0.25f;
-	const float max_drain = 0.3f;
-	const float max_target_speed = 2.5f;
-	const float max_hammer_length = 4.0f;
-	const float gain = 0.5f;
-	float hammer_length = max_hammer_length;
-	float spawn_timer = 0.0f;
-	float spawn_delay = 0.5f;
-	float target_speed = 1.0f;
-	float drain = 0.1f;
-	unsigned int points = 0;
-	int state = 0;
+	const float level_speed_inc = 0.1f;
+	const float starting_speed_inc = 0.2f;
+	const int max_level = (int)(config.size.y / length);
+	float starting_speed = 1.0f;
+	float level_speed = starting_speed;
+	float level_width = width;
+	glm::vec2 level(0.0f, -1.0f + 0.5f * height);
+	bool died = false;
+	int levelnum = 1;
 
-	glm::vec2 hammer(0.0, 0.0f);
-	std::vector<glm::vec4> targets;
-
-	// http://en.cppreference.com/w/cpp/numeric/random/uniform_real_distribution
-	std::random_device rd;
-	std::mt19937 gen(rd());
-	std::uniform_real_distribution<float> loc_dist(-1.0f + 0.5f * width, std::nextafterf(1.0f - 0.5f * width, FLT_MAX));
-	std::uniform_real_distribution<float> angle_dist((float)M_PI / 3.0f, std::nextafterf(2.0f * (float)M_PI / 3.0f, FLT_MAX)); // 45 deg to 135 deg
-	std::uniform_real_distribution<float> speed_dist(-0.1f, std::nextafterf(0.0f, FLT_MAX)); // variance in speed
-	std::uniform_int_distribution<int> dist(0, 1);
+	std::vector<glm::vec4> tower;
 	
 	//------------  game loop ------------
 
@@ -116,12 +99,66 @@ int main(int argc, char **argv) {
 		static SDL_Event evt;
 		while (SDL_PollEvent(&evt) == 1) {
 			//handle input:
-			if (evt.type == SDL_MOUSEMOTION) {
-				if (state == 1)
-					hammer.x = (evt.motion.x + 0.5f) / config.size.x * 2.0f - 1.0f;
-			} else if (evt.type == SDL_MOUSEBUTTONDOWN) {
-				if (state == 0)
-					state = 1;
+			if (evt.type == SDL_MOUSEBUTTONDOWN && evt.button.button == SDL_BUTTON_LEFT) {
+				if (died)
+				{
+					if (level_speed > 0.0f)
+						level_speed = starting_speed;
+					else
+						level_speed = -starting_speed;
+					level_width = width;
+					level.y = -1.0f + 0.5f * height;
+					died = false;
+					tower.clear();
+				}
+				else if (tower.size() == max_level)
+				{
+					starting_speed += starting_speed_inc;
+					if (level_speed > 0.0f)
+						level_speed = starting_speed;
+					else
+						level_speed = -starting_speed;
+					level_width = width;
+					level.y = -1.0f + 0.5f * height;
+					tower.clear();
+
+					char buffer[256];
+					sprintf_s(buffer, "Game0: Stacking - Level %d", ++levelnum);
+					SDL_SetWindowTitle(window, buffer);
+				}
+				else
+				{
+					float left = level.x - 0.5f * level_width;
+					float right = level.x + 0.5f * level_width;
+					if (!tower.empty())
+					{
+						glm::vec4 prev = tower[tower.size() - 1];
+						if (left < prev.x && prev.x < right)
+						{
+							level_width = right - prev.x;
+							left = prev.x;
+						}
+						else if (left < prev.z && prev.z < right)
+						{
+							level_width = prev.z - left;
+							right = prev.z;
+						}
+						else
+						{
+							std::cout << "You lose!" << std::endl;
+							died = true;
+							continue;
+						}
+					}
+					tower.push_back(glm::vec4(left, level.y - 0.475f * height, right, level.y + 0.475f * height));
+					if (tower.size() == max_level)
+						std::cout << "You win!" << std::endl;
+					if (level_speed > 0.0f)
+						level_speed += level_speed_inc;
+					else
+						level_speed -= level_speed_inc;
+					level.y += height;
+				}
 			} else if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_ESCAPE) {
 				should_quit = true;
 			} else if (evt.type == SDL_QUIT) {
@@ -131,91 +168,22 @@ int main(int argc, char **argv) {
 		if (should_quit) break;
 
 		auto current_time = std::chrono::high_resolution_clock::now();
-		float elapsed = min(1.0f / 60.0f, std::chrono::duration< float >(current_time - previous_time).count());
+		float elapsed = std::chrono::duration< float >(current_time - previous_time).count();
 		previous_time = current_time;
 
 		{ //update game state:
-			// drain
-			if (state > 0)
+			if (!died && tower.size() != max_level)
 			{
-				float health = hammer_length;
-				if (state == 1)
+				level.x += elapsed * level_speed;
+				if (level.x > 1.0f - 0.5f * level_width)
 				{
-					if (hammer.x > 1.0f - 0.5f * hammer_length * width)
-						hammer.x = 1.0f - 0.5f * hammer_length * width;
-					else if (hammer.x < -1.0f + 0.5f * hammer_length * width)
-						hammer.x = -1.0f + 0.5f * hammer_length * width;
-
-					health -= elapsed * drain;
-					// hulk smash
-					for (auto target = targets.begin(); target != targets.end(); )
-					{
-						if (target->y < height && target->y > -height && target->x - 0.5f * width < hammer.x + 0.5f * hammer_length * width && target->x + 0.5f * width > hammer.x - 0.5f * hammer_length * width)
-						{
-							target = targets.erase(target);
-							health += gain;
-							if (spawn_delay > min_spawn_delay)
-								spawn_delay -= spawn_delay_decrease;
-							if (drain < max_drain)
-								drain += drain_increase;
-							if (target_speed < max_target_speed)
-								target_speed += target_speed_increase;
-							points++;
-							std::cout << points << std::endl;
-						}
-						else
-							target++;
-					}
-
-					// spawn targets
-					spawn_timer -= elapsed;
-					while (spawn_timer <= 0.0f)
-					{
-						float angle = angle_dist(gen);
-						float x = loc_dist(gen);
-						float vx = cosf(angle) * target_speed;
-						float vy = sinf(angle) * target_speed;
-						if (targets.size() < 25)
-						{
-							if (dist(gen))
-								targets.push_back(glm::vec4(x, 1.0f - 0.5f * height, vx, -vy));
-							else
-								targets.push_back(glm::vec4(x, -1.0f + 0.5f * height, vx, vy));
-						}
-
-						spawn_timer += spawn_delay;
-					}
+					level.x = 2.0f * (1.0f - 0.5f * level_width) - level.x;
+					level_speed = -level_speed;
 				}
-
-				for (auto target = targets.begin(); target != targets.end(); )
+				else if (level.x < -1.0f + 0.5f * level_width)
 				{
-					float dx = elapsed * target->z;
-					float dy = elapsed * target->w;
-					target->x += dx;
-					target->y += dy;
-					// maybe reverse off wall
-					if (target->x <= -1.0f + 0.5f * width)
-						target->z = std::abs(target->z);
-					else if (target->x >= 1.0f - 0.5f * width)
-						target->z = -std::abs(target->z);
-					if (target->y <= -1.0f + 0.5f * height) // MAYBE PASS THROUGH INSTEAD.
-						target->w = std::abs(target->w);
-					else if (target->y >= 1.0f - 0.5f * height)
-						target->w = -std::abs(target->w);
-					if (state == 1 && target->y < height && target->y > -height && target->x - 0.5f * width < hammer.x + 0.5f * hammer_length * width && target->x + 0.5f * width > hammer.x - 0.5f * hammer_length * width)
-					{
-						target = targets.erase(target);
-						health -= drain;
-					}
-					else
-						target++;
-				}
-
-				hammer_length = min(health, max_hammer_length);
-				if (hammer_length <= 0.0f)
-				{
-					hammer_length = 0.0f;
-					state = 2;
+					level.x = 2.0f * (-1.0f + 0.5f * level_width) - level.x;
+					level_speed = -level_speed;
 				}
 			}
 		}
@@ -226,14 +194,20 @@ int main(int argc, char **argv) {
 
 		{ //draw game state:
 			Draw draw;
-			if (hammer_length > 1.0f)
-				draw.add_rectangle(hammer - glm::vec2(0.5f * hammer_length * width, 0.5f * height), hammer + glm::vec2(0.5f * hammer_length * width, 0.5f * height), glm::u8vec4(0xFF, 0xFF, 0xFF, 0xFF));
+			if (tower.size() == max_level)
+				for (auto level : tower)
+					draw.add_rectangle(glm::vec2(level.x, level.y), glm::vec2(level.z, level.w), glm::vec4(0x00, 0xFF, 0x00, 0xFF));
 			else
-				draw.add_rectangle(hammer - glm::vec2(0.5f * width, 0.5f * height), hammer + glm::vec2(0.5f * width, 0.5f * height), glm::u8vec4(0xFF, (int)(0xFF * hammer_length), (int)(0xFF * hammer_length), 0xFF));
-			draw.add_rectangle(glm::vec2(-1.0f, 0.6f * height), glm::vec2(1.0f, 0.5f * height), glm::u8vec4(0x00, 0x00, 0xFF, 0xFF));
-			draw.add_rectangle(glm::vec2(-1.0f, -0.6f * height), glm::vec2(1.0f, -0.5f * height), glm::u8vec4(0x00, 0x00, 0xFF, 0xFF));
-			for (glm::vec4 target : targets)
-				draw.add_rectangle(glm::vec2(target.x - 0.5f * width, target.y - 0.5f * height), glm::vec2(target.x + 0.5f * width, target.y + 0.5f * width), glm::u8vec4(0xFF, 0xFF, 0xFF, 0xFF));
+			{
+				if (!died)
+					draw.add_rectangle(level - glm::vec2(0.5f * level_width, 0.475f * height), level + glm::vec2(0.5f * level_width, 0.475f * height), glm::u8vec4(0xFF, 0xFF, 0xFF, 0xFF));
+				else
+					draw.add_rectangle(level - glm::vec2(0.5f * level_width, 0.475f * height), level + glm::vec2(0.5f * level_width, 0.475f * height), glm::u8vec4(0xFF, 0x00, 0x00, 0xFF));
+
+				for (auto level : tower)
+					draw.add_rectangle(glm::vec2(level.x, level.y), glm::vec2(level.z, level.w), glm::vec4(0xFF, 0xFF, 0xFF, 0xFF));
+			}
+			
 			draw.draw();
 		}
 
