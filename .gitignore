@@ -1,0 +1,18 @@
+main
+main.exe
+objs
+SDL2.dll
+kit-libs-win
+
+## Ignore Visual Studio
+*.suo
+*.db
+*.opendb
+*.vcxproj
+*.filters
+*.user
+*.userosscache
+*.sln.docstates
+Debug/
+Release/
+.vs/
