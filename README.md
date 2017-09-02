@@ -1,10 +1,17 @@
-# Base0
+# Game0 - Stacking Game
 
-Base0 is the starter code for the game0 in the 15-466-f17 course. It was developed by Jim McCann, and is hereby released into the public domain.
+Stacking game based on Adriel's design [http://graphics.cs.cmu.edu/courses/15-466-f17/game0-designs/aluo/](http://graphics.cs.cmu.edu/courses/15-466-f17/game0-designs/aluo/)
 
-Note that Base0 is attempting to illustrate a very straightfoward "get it done" philosophy of game code design -- I've purposefully removed some of the conveniences one typically uses to sweep things under the rug.
+Left-click to place a block. Each block must be placed on the previous, and the speed of the next block will increase. Any part of a block that's not resting on the previous block will be cut off. When you reach the top of the screen, you win!
 
-This is because game0 *does not need* such conveniences. It is simple because game0 is simple.
+When you win, the game can be started over, but the base speed of the blocks will increase.
+
+
+![](https://github.com/0aix/game0/blob/master/screenshot.png?raw=true)
+
+## Base0
+
+Base0 is the starter code for the game0 in the 15-466-f17 course. It was developed by Jim McCann.
 
 ## Requirements
 
